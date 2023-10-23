@@ -2012,9 +2012,18 @@
     "type": "effect_type",
     "id": "pkill3",
     "pkill_addict_reduces": true,
-    "base_mods": { "pkill_tick": [ 80 ], "pkill_min": [ 1 ] },
+    "base_mods": { "pkill_tick": [ 120 ], "pkill_min": [ 1 ] },
     "rating": "good",
     "blood_analysis_description": "Heavy Painkiller"
+  },
+
+    {
+    "type": "effect_type",
+    "id": "pkill4",
+    "pkill_addict_reduces": true,
+    "base_mods": { "pkill_tick": [ 10 ], "pkill_min": [ 1 ] },
+    "rating": "good",
+    "blood_analysis_description": "Intravenous Heavy Painkiller"
   },
   {
     "type": "effect_type",
