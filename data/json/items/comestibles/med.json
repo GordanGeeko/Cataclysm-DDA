@@ -686,9 +686,9 @@
       "activation_message": "You shoot up.",
       "tools_needed": { "syringe": -1 },
       "effects": [
-        { "id": "pkill3", "duration": 480 },
-        { "id": "pkill2", "duration": 1200 },
-        { "id": "cough_suppress", "duration": 1000 }
+        { "id": "pkill3", "duration": 1800 },
+        { "id": "pkill2", "duration": 3600 },
+        { "id": "cough_suppress", "duration": 3000 }
       ]
     }
   },
@@ -1212,7 +1212,7 @@
     "use_action": {
       "type": "consume_drug",
       "activation_message": "You take some tramadol.",
-      "effects": [ { "id": "pkill2", "duration": 14400 } { "id": "pkill_l", "duration": 27000 } ]
+      "effects": [ { "id": "pkill2", "duration": 14400 }, { "id": "pkill_l", "duration": 27000 } ]
     }
   },
   {
