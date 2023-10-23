@@ -314,7 +314,7 @@
     "use_action": {
       "type": "consume_drug",
       "activation_message": "You take some codeine.",
-      "effects": [ { "id": "pkill2", "duration": 1080 }, { "id": "cough_suppress", "duration": 1000 } ]
+      "effects": [ { "id": "pkill2", "duration": 7200 }, { "id": "cough_suppress", "duration": 7200 } ]
     }
   },
   {
@@ -928,7 +928,6 @@
     "color": "light_green",
     "container": "bottle_plastic_pill_prescription",
     "healthy": -1,
-    "stim": -4,
     "fun": 18,
     "flags": [ "IRREPLACEABLE_CONSUMABLE", "EDIBLE_FROZEN" ],
     "addiction_potential": 16,
@@ -936,7 +935,7 @@
     "use_action": {
       "type": "consume_drug",
       "activation_message": "You take some oxycodone.",
-      "effects": [ { "id": "pkill3", "duration": 120 }, { "id": "pkill2", "duration": 1200 } ]
+      "effects": [ { "id": "pkill3", "duration": 7200 }, { "id": "pkill2", "duration": 18000 } ]
     }
   },
   {
@@ -984,7 +983,7 @@
     "use_action": {
       "type": "consume_drug",
       "activation_message": "You take some poppy painkiller.",
-      "effects": [ { "id": "pkill2", "duration": 1080 } ]
+      "effects": [ { "id": "pkill2", "duration": 10080 } ]
     }
   },
   {
@@ -1213,7 +1212,7 @@
     "use_action": {
       "type": "consume_drug",
       "activation_message": "You take some tramadol.",
-      "effects": [ { "id": "pkill_l", "duration": 27000 } ]
+      "effects": [ { "id": "pkill2", "duration": 14400 } { "id": "pkill_l", "duration": 27000 } ]
     }
   },
   {
