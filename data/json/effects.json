@@ -2029,7 +2029,7 @@
     "type": "effect_type",
     "id": "pkill_l",
     "pkill_addict_reduces": true,
-    "base_mods": { "pkill_max_val": [ 40 ], "pkill_tick": [ 120 ], "pkill_min": [ 1 ] },
+    "base_mods": { "pkill_max_val": [ 50 ], "pkill_tick": [ 110 ], "pkill_min": [ 1 ] },
     "rating": "good",
     "blood_analysis_description": "Slow-Release Painkiller"
   },
