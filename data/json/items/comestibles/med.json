@@ -686,8 +686,8 @@
       "activation_message": "You shoot up.",
       "tools_needed": { "syringe": -1 },
       "effects": [
-        { "id": "pkill4", "duration": 1800 },
-        { "id": "pkill2", "duration": 7000 },
+        { "id": "pkill4", "duration": 1000 },
+        { "id": "pkill2", "duration": 5000 },
         { "id": "cough_suppress", "duration": 6000 }
       ]
     }
@@ -823,7 +823,7 @@
       "type": "consume_drug",
       "activation_message": "You shoot up.",
       "tools_needed": { "syringe": -1 },
-      "effects": [ { "id": "pkill4", "duration": 120 }, { "id": "pkill2", "duration": 3000 } ]
+      "effects": [ { "id": "pkill4", "duration": 600 }, { "id": "pkill2", "duration": 3000 } ]
     }
   },
   {
