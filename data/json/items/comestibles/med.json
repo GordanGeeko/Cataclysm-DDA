@@ -687,7 +687,7 @@
       "tools_needed": { "syringe": -1 },
       "effects": [
         { "id": "pkill4", "duration": 1000 },
-        { "id": "pkill2", "duration": 5000 },
+        { "id": "pkill2", "duration": 3000 },
         { "id": "cough_suppress", "duration": 6000 }
       ]
     }
