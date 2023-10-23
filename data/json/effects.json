@@ -2004,7 +2004,7 @@
     "type": "effect_type",
     "id": "pkill2",
     "pkill_addict_reduces": true,
-    "base_mods": { "pkill_tick": [ 42 ], "pkill_min": [ 2 ] },
+    "base_mods": { "pkill_tick": [ 142 ], "pkill_min": [ 2 ] },
     "rating": "good",
     "blood_analysis_description": "Moderate Painkiller"
   },
