@@ -46,7 +46,8 @@ void give_skills( Character &u, construction const &build )
     for( auto const *cons : constructions_by_group( build.group ) ) {
         for( auto const &skill : cons->required_skills ) {
             u.set_skill_level( skill.first,
-                               std::max( u.get_skill_level( skill.first ), skill.second ) );
+                               std::max( static_cast<int>( static_cast<int>( u.get_skill_level( skill.first ) ) ),
+                                         skill.second ) );
         }
     }
     REQUIRE( u.meets_skill_requirements( build ) );
@@ -144,7 +145,6 @@ void run_test_case( Character &u )
         run_activities( u, build.time * 10 );
         REQUIRE( here.ter( tri_window ) == ter_id( build.post_terrain ) );
     }
-
 
     SECTION( "1-step construction activity with prereq with only pre_special" ) {
         u.setpos( tripoint_zero );

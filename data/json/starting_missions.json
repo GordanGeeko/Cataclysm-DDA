@@ -163,7 +163,7 @@
     "name": { "str": "Prepare for your next show" },
     "description": "Become the best clown, make sure that your next show will make everyone laugh by training your social skills to perfection.",
     "goal": "MGOAL_CONDITION",
-    "goal_condition": { "u_has_skill": { "skill": "speech", "level": 6 } },
+    "goal_condition": { "math": [ "u_skill('speech')", ">=", "6" ] },
     "difficulty": 3,
     "value": 0,
     "end": {
@@ -209,8 +209,8 @@
     "goal": "MGOAL_CONDITION",
     "goal_condition": {
       "and": [
-        { "u_has_skill": { "skill": "melee", "level": 5 } },
-        { "u_has_skill": { "skill": "dodge", "level": 5 } },
+        { "math": [ "u_skill('melee')", ">=", "5" ] },
+        { "math": [ "u_skill('dodge')", ">=", "5" ] },
         { "u_has_item": "judo_belt_black" }
       ]
     },
@@ -237,6 +237,35 @@
     "goal": "MGOAL_CONDITION",
     "goal_condition": { "u_has_item": "katana" },
     "difficulty": 4,
+    "value": 0,
+    "end": {
+      "effect": [
+        {
+          "u_add_morale": "morale_feeling_good",
+          "bonus": 20,
+          "max_bonus": 50,
+          "duration": "120 minutes",
+          "decay_start": "120 minutes"
+        }
+      ]
+    },
+    "origins": [ "ORIGIN_GAME_START" ]
+  },
+  {
+    "id": "MISSION_FIND_RIFLE",
+    "type": "mission_definition",
+    "name": { "str": "Find a new rifle" },
+    "description": "When you were escaping an evacuation point that was overrun, you had to leave your rifle behind.  Shame on you, what's a hunter without their hunting rifle?  You have to find one immediately.",
+    "goal": "MGOAL_CONDITION",
+    "goal_condition": {
+      "or": [
+        { "u_has_item": "remmington_700" },
+        { "u_has_item": "modular_ar15" },
+        { "u_has_item": "remington700_270" },
+        { "u_has_item": "savage_111f" }
+      ]
+    },
+    "difficulty": 3,
     "value": 0,
     "end": {
       "effect": [

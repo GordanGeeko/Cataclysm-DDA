@@ -4,13 +4,13 @@
 
 #include <list>
 #include <map>
+#include <optional>
 #include <string>
 #include <vector>
 
 #include "enums.h"
 #include "flat_set.h"
 #include "json.h"
-#include "optional.h"
 #include "omdata.h"
 #include "type_id.h"
 
@@ -25,6 +25,7 @@ struct advanced_inv_pane_save_state {
 
         bool in_vehicle = false;
         item_location container;
+        int container_base_loc;
 
         void serialize( JsonOut &json, const std::string &prefix ) const {
             json.member( prefix + "sort_idx", sort_idx );
@@ -33,6 +34,7 @@ struct advanced_inv_pane_save_state {
             json.member( prefix + "selected_idx", selected_idx );
             json.member( prefix + "in_vehicle", in_vehicle );
             json.member( prefix + "container", container );
+            json.member( prefix + "container_base_loc", container_base_loc );
         }
 
         void deserialize( const JsonObject &jo, const std::string &prefix ) {
@@ -42,6 +44,7 @@ struct advanced_inv_pane_save_state {
             jo.read( prefix + "selected_idx", selected_idx );
             jo.read( prefix + "in_vehicle", in_vehicle );
             jo.read( prefix + "container", container );
+            jo.read( prefix + "container_base_loc", container_base_loc );
         }
 };
 
@@ -121,6 +124,9 @@ class uistatedata
 
         advanced_inv_save_state transfer_save;
 
+        bool unload_auto_contain = true;
+        std::optional<bool> hide_entries_override = std::nullopt;
+
         bool editmap_nsa_viewmode = false;      // true: ignore LOS and lighting
         bool overmap_blinking = true;           // toggles active blinking of overlays.
         bool overmap_show_overlays = false;     // whether overlays are shown or not.
@@ -148,6 +154,8 @@ class uistatedata
         bool distraction_thirst = true;
         bool distraction_temperature = true;
         bool distraction_mutation = true;
+        bool distraction_oxygen = true;
+        bool numpad_navigation = false;
 
         // V Menu Stuff
         int list_item_sort = 0;
@@ -204,7 +212,7 @@ class uistatedata
 
         // nice little convenience function for serializing an array, regardless of amount. :^)
         template<typename T>
-        void serialize_array( JsonOut &json, const std::string &name, T &data ) const {
+        void serialize_array( JsonOut &json, const std::string_view name, T &data ) const {
             json.member( name );
             json.start_array();
             for( const auto &d : data ) {

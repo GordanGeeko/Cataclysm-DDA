@@ -42,10 +42,10 @@ catacurses::window new_centered_win( int nlines, int ncols )
 * @{
 */
 
-static cata::optional<input_event> hotkey_from_char( const int ch )
+static std::optional<input_event> hotkey_from_char( const int ch )
 {
     if( ch == MENU_AUTOASSIGN ) {
-        return cata::nullopt;
+        return std::nullopt;
     } else if( ch <= 0 || ch == ' ' ) {
         return input_event();
     }
@@ -64,13 +64,13 @@ static cata::optional<input_event> hotkey_from_char( const int ch )
 }
 
 uilist_entry::uilist_entry( const std::string &txt )
-    : retval( -1 ), enabled( true ), hotkey( cata::nullopt ), txt( txt ),
+    : retval( -1 ), enabled( true ), hotkey( std::nullopt ), txt( txt ),
       text_color( c_red_red )
 {
 }
 
 uilist_entry::uilist_entry( const std::string &txt, const std::string &desc )
-    : retval( -1 ), enabled( true ), hotkey( cata::nullopt ), txt( txt ),
+    : retval( -1 ), enabled( true ), hotkey( std::nullopt ), txt( txt ),
       desc( desc ), text_color( c_red_red )
 {
 }
@@ -81,7 +81,7 @@ uilist_entry::uilist_entry( const std::string &txt, const int key )
 {
 }
 
-uilist_entry::uilist_entry( const std::string &txt, const cata::optional<input_event> &key )
+uilist_entry::uilist_entry( const std::string &txt, const std::optional<input_event> &key )
     : retval( -1 ), enabled( true ), hotkey( key ), txt( txt ),
       text_color( c_red_red )
 {
@@ -95,7 +95,7 @@ uilist_entry::uilist_entry( const int retval, const bool enabled, const int key,
 }
 
 uilist_entry::uilist_entry( const int retval, const bool enabled,
-                            const cata::optional<input_event> &key,
+                            const std::optional<input_event> &key,
                             const std::string &txt )
     : retval( retval ), enabled( enabled ), hotkey( key ), txt( txt ),
       text_color( c_red_red )
@@ -110,7 +110,7 @@ uilist_entry::uilist_entry( const int retval, const bool enabled, const int key,
 }
 
 uilist_entry::uilist_entry( const int retval, const bool enabled,
-                            const cata::optional<input_event> &key, const std::string &txt, const std::string &desc )
+                            const std::optional<input_event> &key, const std::string &txt, const std::string &desc )
     : retval( retval ), enabled( enabled ), hotkey( key ), txt( txt ),
       desc( desc ), text_color( c_red_red )
 {
@@ -125,7 +125,7 @@ uilist_entry::uilist_entry( const int retval, const bool enabled, const int key,
 }
 
 uilist_entry::uilist_entry( const int retval, const bool enabled,
-                            const cata::optional<input_event> &key,
+                            const std::optional<input_event> &key,
                             const std::string &txt, const std::string &desc,
                             const std::string &column )
     : retval( retval ), enabled( enabled ), hotkey( key ), txt( txt ),
@@ -297,6 +297,10 @@ void uilist::init()
     max_column_len = 0;      // for calculating space for second column
     uilist_scrollbar = std::make_unique<scrollbar>();
 
+    categories.clear();
+    current_category = 0;
+    category_lines = 0;
+
     input_category = "UILIST";
     additional_actions.clear();
 }
@@ -321,6 +325,8 @@ input_context uilist::create_main_input_context() const
         ctxt.register_action( "SELECT" );
     }
     ctxt.register_action( "UILIST.FILTER" );
+    ctxt.register_action( "UILIST.LEFT" );
+    ctxt.register_action( "UILIST.RIGHT" );
     ctxt.register_action( "ANY_INPUT" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
     uilist_scrollbar->set_draggable( ctxt );
@@ -376,6 +382,9 @@ void uilist::filterlist()
     int f = 0;
     for( size_t i = 0; i < entries.size(); i++ ) {
         bool visible = true;
+        if( !categories.empty() && !category_filter( entries[i], categories[current_category].first ) ) {
+            continue;
+        }
         if( filtering && !filter.empty() ) {
             if( filtering_nocase ) {
                 // case-insensitive match
@@ -633,6 +642,13 @@ void uilist::calc_data()
             desc_enabled = false;
         }
     }
+    if( !categories.empty() ) {
+        category_lines = 0;
+        for( const std::pair<std::string, std::string> &pair : categories ) {
+            // -2 for borders, -2 for padding
+            category_lines = std::max<int>( category_lines, foldstring( pair.second, w_width - 4 ).size() );
+        }
+    }
 
     if( w_auto && w_width > TERMX ) {
         w_width = TERMX;
@@ -641,6 +657,9 @@ void uilist::calc_data()
     vmax = entries.size();
     int additional_lines = 2 + text_separator_line + // add two for top & bottom borders
                            static_cast<int>( textformatted.size() );
+    if( !categories.empty() ) {
+        additional_lines += category_lines + 1;
+    }
     if( desc_enabled ) {
         additional_lines += desc_lines + 1; // add one for description separator line
     }
@@ -704,6 +723,7 @@ void uilist::apply_scrollbar()
     } else {
         estart = 1;
     }
+    estart += category_lines > 0 ? category_lines + 1 : 0;
 
     uilist_scrollbar->offset_x( sbside )
     .offset_y( estart )
@@ -736,6 +756,13 @@ void uilist::show( ui_adaptor &ui )
         wprintz( window, border_color, " >" );
     }
 
+    const auto print_line = [&]( int line ) {
+        mvwputch( window, point( 0, line ), border_color, LINE_XXXO );
+        for( int i = 1; i < w_width - 1; ++i ) {
+            mvwputch( window, point( i, line ), border_color, LINE_OXOX );
+        }
+        mvwputch( window, point( w_width - 1, line ), border_color, LINE_XOXX );
+    };
     const int text_lines = textformatted.size();
     int estart = 1;
     if( !textformatted.empty() ) {
@@ -743,13 +770,13 @@ void uilist::show( ui_adaptor &ui )
             trim_and_print( window, point( 2, 1 + i ), getmaxx( window ) - 4,
                             text_color, _color_error, "%s", textformatted[i] );
         }
-
-        mvwputch( window, point( 0, text_lines + 1 ), border_color, LINE_XXXO );
-        for( int i = 1; i < w_width - 1; ++i ) {
-            mvwputch( window, point( i, text_lines + 1 ), border_color, LINE_OXOX );
-        }
-        mvwputch( window, point( w_width - 1, text_lines + 1 ), border_color, LINE_XOXX );
+        print_line( text_lines + 1 );
         estart += text_lines + 1; // +1 for the horizontal line.
+    }
+    if( !categories.empty() ) {
+        mvwprintz( window, point( 1, estart ), c_yellow, "<< %s >>", categories[current_category].second );
+        print_line( estart + category_lines );
+        estart += category_lines + 1;
     }
 
     if( recalc_start ) {
@@ -760,7 +787,7 @@ void uilist::show( ui_adaptor &ui )
     const std::string padspaces = std::string( pad_size, ' ' );
 
     for( uilist_entry &entry : entries ) {
-        entry.drawn_rect = cata::nullopt;
+        entry.drawn_rect = std::nullopt;
     }
 
     // Entry text will be trimmed to this length for printing.  Need spacer at beginning/end, room for second column
@@ -969,7 +996,7 @@ uilist::handle_mouse_result_t uilist::handle_mouse( const input_context &ctxt,
     // Only check MOUSE_MOVE when looping internally
     if( !fentries.empty() && ( ret_act == "SELECT" || ( loop && ret_act == "MOUSE_MOVE" ) ) ) {
         result = handle_mouse_result_t::handled;
-        const cata::optional<point> p = ctxt.get_coordinates_text( window );
+        const std::optional<point> p = ctxt.get_coordinates_text( window );
         if( p && window_contains_point_relative( window, p.value() ) ) {
             const int new_fselected = find_entry_by_coordinate( p.value() );
             if( new_fselected >= 0 && static_cast<size_t>( new_fselected ) < fentries.size() ) {
@@ -979,14 +1006,14 @@ uilist::handle_mouse_result_t uilist::handle_mouse( const input_context &ctxt,
                     // function is called again.
                     fselected = new_fselected;
                     selected = fentries[fselected];
+                    if( callback != nullptr ) {
+                        callback->select( this );
+                    }
                     if( ret_act == "SELECT" ) {
                         if( enabled || allow_disabled ) {
                             ret = entries[selected].retval;
                             // Treating clicking during filtering as confirmation and stop filtering
                             result = handle_mouse_result_t::confirmed;
-                        }
-                        if( callback != nullptr ) {
-                            callback->select( this );
                         }
                     }
                 }
@@ -1102,6 +1129,14 @@ void uilist::query( bool loop, int timeout )
             recalc_start = true;
         } else if( filtering && ret_act == "UILIST.FILTER" ) {
             inputfilter();
+        } else if( !categories.empty() && ( ret_act == "UILIST.LEFT" || ret_act == "UILIST.RIGHT" ) ) {
+            current_category += ret_act == "UILIST.LEFT" ? -1 : 1;
+            if( current_category < 0 ) {
+                current_category = categories.size() - 1;
+            } else if( current_category >= static_cast<int>( categories.size() ) ) {
+                current_category = 0;
+            }
+            filterlist();
         } else if( iter != keymap.end() ) {
             const auto it = std::find( fentries.begin(), fentries.end(), iter->second );
             if( it != fentries.end() ) {
@@ -1181,7 +1216,7 @@ void uilist::addentry( int retval, bool enabled, int key, const std::string &txt
 }
 
 void uilist::addentry( const int retval, const bool enabled,
-                       const cata::optional<input_event> &key,
+                       const std::optional<input_event> &key,
                        const std::string &txt )
 {
     entries.emplace_back( retval, enabled, key, txt );
@@ -1198,7 +1233,7 @@ void uilist::addentry_desc( int retval, bool enabled, int key, const std::string
     entries.emplace_back( retval, enabled, key, txt, desc );
 }
 
-void uilist::addentry_desc( int retval, bool enabled, const cata::optional<input_event> &key,
+void uilist::addentry_desc( int retval, bool enabled, const std::optional<input_event> &key,
                             const std::string &txt, const std::string &desc )
 {
     entries.emplace_back( retval, enabled, key, txt, desc );
@@ -1212,7 +1247,7 @@ void uilist::addentry_col( int retval, bool enabled, int key, const std::string 
 }
 
 void uilist::addentry_col( const int retval, const bool enabled,
-                           const cata::optional<input_event> &key,
+                           const std::optional<input_event> &key,
                            const std::string &txt, const std::string &column,
                            const std::string &desc )
 {
@@ -1222,6 +1257,37 @@ void uilist::addentry_col( const int retval, const bool enabled,
 void uilist::settext( const std::string &str )
 {
     text = str;
+}
+
+void uilist::set_selected( int index )
+{
+    selected = std::clamp( index, 0, static_cast<int>( entries.size() - 1 ) );
+}
+
+void uilist::add_category( const std::string &key, const std::string &name )
+{
+    categories.emplace_back( key, name );
+    std::sort( categories.begin(), categories.end(), []( const std::pair<std::string, std::string> &a,
+    const std::pair<std::string, std::string> &b ) {
+        return localized_compare( a.second, b.second );
+    } );
+    const auto itr = std::unique( categories.begin(), categories.end() );
+    categories.erase( itr, categories.end() );
+}
+
+void uilist::set_category( const std::string &key )
+{
+    const auto it = std::find_if( categories.begin(),
+    categories.end(), [key]( std::pair<std::string, std::string> &pair ) {
+        return pair.first == key;
+    } );
+    current_category = std::distance( categories.begin(), it );
+}
+
+void uilist::set_category_filter( const
+                                  std::function<bool( const uilist_entry &, const std::string & )> &fun )
+{
+    category_filter = fun;
 }
 
 struct pointmenu_cb::impl_t {
@@ -1281,4 +1347,45 @@ pointmenu_cb::~pointmenu_cb() = default;
 void pointmenu_cb::select( uilist *const menu )
 {
     impl->select( menu );
+}
+
+template bool navigate_ui_list<int, int>( const std::string &action, int &val, int page_delta,
+        int size, bool wrap );
+template bool navigate_ui_list<int, size_t>( const std::string &action, int &val, int page_delta,
+        size_t size, bool wrap );
+template bool navigate_ui_list<size_t, size_t>( const std::string &action, size_t &val,
+        int page_delta, size_t size, bool wrap );
+template bool navigate_ui_list<unsigned int, unsigned int>( const std::string &action,
+        unsigned int &val,
+        int page_delta, unsigned int size, bool wrap );
+
+// Templating of existing `unsigned int` triggers linter rules against `unsigned long`
+// NOLINTs below are to address
+template<typename V, typename S>
+bool navigate_ui_list( const std::string &action, V &val, int page_delta, S size, bool wrap )
+{
+    if( action == "UP" || action == "SCROLL_UP" || action == "DOWN" || action == "SCROLL_DOWN" ) {
+        if( wrap ) {
+            // NOLINTNEXTLINE(cata-no-long)
+            val = inc_clamp_wrap( val, action == "DOWN" || action == "SCROLL_DOWN", static_cast<V>( size ) );
+        } else {
+            val = inc_clamp( val, action == "DOWN" || action == "SCROLL_DOWN",
+                             // NOLINTNEXTLINE(cata-no-long)
+                             static_cast<V>( size ? size - 1 : 0 ) );
+        }
+    } else if( ( action == "PAGE_UP" || action == "PAGE_DOWN" ) && page_delta ) {
+        // page navigation never wraps
+        val = inc_clamp( val, action == "PAGE_UP" ? -page_delta : page_delta,
+                         // NOLINTNEXTLINE(cata-no-long)
+                         static_cast<V>( size ? size - 1 : 0 ) );
+    } else if( action == "HOME" ) {
+        // NOLINTNEXTLINE(cata-no-long)
+        val = static_cast<V>( 0 );
+    } else if( action == "END" ) {
+        // NOLINTNEXTLINE(cata-no-long)
+        val = static_cast<V>( size ? size - 1 : 0 );
+    } else {
+        return false;
+    }
+    return true;
 }

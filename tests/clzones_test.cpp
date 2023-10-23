@@ -27,7 +27,7 @@ static const zone_type_id zone_type_LOOT_FOOD( "LOOT_FOOD" );
 static const zone_type_id zone_type_LOOT_PDRINK( "LOOT_PDRINK" );
 static const zone_type_id zone_type_LOOT_PFOOD( "LOOT_PFOOD" );
 static const zone_type_id zone_type_LOOT_UNSORTED( "LOOT_UNSORTED" );
-static const zone_type_id zone_type_zone_unload_all( "zone_unload_all" );
+static const zone_type_id zone_type_UNLOAD_ALL( "UNLOAD_ALL" );
 
 namespace
 {
@@ -44,10 +44,10 @@ int _count_items_or_charges( const T &items, const itype_id &id )
 }
 
 int count_items_or_charges( const tripoint src, const itype_id &id,
-                            const cata::optional<vpart_reference> &vp )
+                            const std::optional<vpart_reference> &vp )
 {
     if( vp ) {
-        return _count_items_or_charges( vp->vehicle().get_items( vp->part_index() ), id );
+        return _count_items_or_charges( vp->vehicle().get_items( vp->part() ), id );
     }
     return _count_items_or_charges( get_map().i_at( src ), id );
 }
@@ -61,11 +61,11 @@ void create_tile_zone( const std::string &name, const zone_type_id &zone_type, t
 
 } // namespace
 
-TEST_CASE( "zone unloading ammo belts", "[zones][items][ammo_belt][activities][unload]" )
+TEST_CASE( "zone_unloading_ammo_belts", "[zones][items][ammo_belt][activities][unload]" )
 {
     avatar &dummy = get_avatar();
     map &here = get_map();
-    cata::optional<vpart_reference> vp;
+    std::optional<vpart_reference> vp;
     bool const in_vehicle = GENERATE( false, true );
     CAPTURE( in_vehicle );
 
@@ -77,15 +77,14 @@ TEST_CASE( "zone unloading ammo belts", "[zones][items][ammo_belt][activities][u
     dummy.set_location( start );
 
     if( in_vehicle ) {
-        REQUIRE(
-            here.add_vehicle( vehicle_prototype_shopping_cart, tripoint_east, 0_degrees, 0, 0 ) );
-        vp = here.veh_at( start ).part_with_feature( "CARGO", true );
+        REQUIRE( here.add_vehicle( vehicle_prototype_shopping_cart, tripoint_east, 0_degrees, 0, 0 ) );
+        vp = here.veh_at( start ).cargo();
         REQUIRE( vp );
         vp->vehicle().set_owner( dummy );
     }
 
     create_tile_zone( "Unsorted", zone_type_LOOT_UNSORTED, start.raw(), in_vehicle );
-    create_tile_zone( "Unload All", zone_type_zone_unload_all, start.raw(), in_vehicle );
+    create_tile_zone( "Unload All", zone_type_UNLOAD_ALL, start.raw(), in_vehicle );
 
     item ammo_belt = item( itype_belt223, calendar::turn );
     ammo_belt.ammo_set( ammo_belt.ammo_default() );
@@ -93,16 +92,16 @@ TEST_CASE( "zone unloading ammo belts", "[zones][items][ammo_belt][activities][u
 
     REQUIRE( belt_ammo_count_before_unload > 0 );
 
-    WHEN( "unloading ammo belts using zone_unload_all " ) {
+    WHEN( "unloading ammo belts using UNLOAD_ALL " ) {
         if( in_vehicle ) {
-            vp->vehicle().add_item( vp->part_index(), ammo_belt );
+            vp->vehicle().add_item( vp->part(), ammo_belt );
         } else {
             here.add_item_or_charges( tripoint_east, ammo_belt );
         }
         if( move_act ) {
             dummy.assign_activity( player_activity( ACT_MOVE_LOOT ) );
         } else {
-            dummy.assign_activity( player_activity( unload_loot_activity_actor() ) );
+            dummy.assign_activity( unload_loot_activity_actor() );
         }
         CAPTURE( dummy.activity.id() );
         process_activity( dummy );
@@ -119,7 +118,7 @@ TEST_CASE( "zone unloading ammo belts", "[zones][items][ammo_belt][activities][u
 // Comestibles sorting is a bit awkward. Unlike other loot, they're almost
 // always inside of a container, and their sort zone changes based on their
 // shelf life and whether the container prevents rotting.
-TEST_CASE( "zone sorting comestibles ", "[zones][items][food][activities]" )
+TEST_CASE( "zone_sorting_comestibles_", "[zones][items][food][activities]" )
 {
     clear_map();
     zone_manager &zm = zone_manager::get_manager();
