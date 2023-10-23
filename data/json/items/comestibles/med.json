@@ -314,7 +314,7 @@
     "use_action": {
       "type": "consume_drug",
       "activation_message": "You take some codeine.",
-      "effects": [ { "id": "pkill2", "duration": 5000 }, { "id": "cough_suppress", "duration": 7200 } ]
+      "effects": [ { "id": "pkill2", "duration": 8000}, { "id": "cough_suppress", "duration": 7500 } ]
     }
   },
   {
@@ -1212,7 +1212,7 @@
     "use_action": {
       "type": "consume_drug",
       "activation_message": "You take some tramadol.",
-      "effects": [ { "id": "pkill_l", "duration": 22000 } ]
+      "effects": [ { "id": "pkill_l", "duration": 27000 } ]
     }
   },
   {
