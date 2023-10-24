@@ -879,6 +879,8 @@ class Character : public Creature, public visitable
         bool is_electrical() const override;
         // true if the character is from the nether
         bool is_nether() const override;
+        // true if the character has a sapient mind
+        bool has_mind() const override;
         /** Returns the penalty to speed from thirst */
         static int thirst_speed_penalty( int thirst );
         /** Returns the effect of pain on stats */
@@ -3481,6 +3483,11 @@ class Character : public Creature, public visitable
         bool can_continue_craft( item &craft, const requirement_data &continue_reqs );
         /** Return nearby Characters ready and willing to help with crafting. */
         std::vector<Character *> get_crafting_helpers() const;
+        /**
+         * Return group of ally characters sharing knowledge of crafting.
+         * Unlike get_crafting_helpers, includes the caller and sleeping Characters.
+         */
+        std::vector<Character *> get_crafting_group() const;
         int get_num_crafting_helpers( int max ) const;
         /**
          * Handle skill gain for player and followers during crafting.
